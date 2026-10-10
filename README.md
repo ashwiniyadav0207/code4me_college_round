@@ -1,3 +1,4 @@
+
 # Second Opinion (VeriFact)
 
 **Evidence-grounded answer auditing.** Second Opinion takes an AI-generated answer and a source
@@ -198,3 +199,6 @@ Second Opinion evaluates claims against the source document you supply. It does 
 verify whether that source is true, current or authoritative. Verdicts are model proposals;
 quotation matching proves only that text exists in the source, not that it proves the claim.
 Anything flagged for human review should be reviewed by a person.
+
+
+
