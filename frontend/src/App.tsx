@@ -10,6 +10,17 @@ import Results from './components/Results'
 import type { AnalyseResult } from './types'
 
 export default function App() {
+  const [theme, setTheme] = useState<'light' | 'dark'>(() => {
+    if (typeof window !== 'undefined') {
+      const saved = localStorage.getItem('second-opinion-theme')
+      if (saved === 'dark' || saved === 'light') return saved
+      if (window.matchMedia && window.matchMedia('(prefers-color-scheme: dark)').matches) {
+        return 'dark'
+      }
+    }
+    return 'light'
+  })
+
   const [mode, setMode] = useState<'pdf' | 'text'>('text')
   const [file, setFile] = useState<File | null>(null)
   const [fileError, setFileError] = useState<string | null>(null)
@@ -23,10 +34,20 @@ export default function App() {
   const resultsRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
+    document.documentElement.setAttribute('data-theme', theme)
+    document.documentElement.classList.toggle('dark', theme === 'dark')
+    localStorage.setItem('second-opinion-theme', theme)
+  }, [theme])
+
+  useEffect(() => {
     if (result && resultsRef.current) {
       resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
   }, [result])
+
+  const toggleTheme = () => {
+    setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
+  }
 
   const reset = () => {
     setMode('text')
@@ -60,11 +81,11 @@ export default function App() {
   }
 
   return (
-    <div className="flex min-h-screen flex-col">
-      <Header />
+    <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-ivory text-charcoal transition-colors duration-150">
+      <Header theme={theme} onToggleTheme={toggleTheme} />
 
-      <main className="flex-1">
-        {!result && <Intro />}
+      <main className="relative z-10 flex-1">
+        {!result && <Intro theme={theme} />}
 
         <InputWorkspace
           mode={mode}

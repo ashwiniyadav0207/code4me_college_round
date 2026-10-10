@@ -6,9 +6,9 @@ interface Props {
 export default function ErrorBanner({ message, onDismiss }: Props) {
   return (
     <section className="mx-auto max-w-[1200px] px-5 pt-8 sm:px-8" role="alert">
-      <div className="flex items-start justify-between gap-6 border border-brick/35 bg-brick-surface px-5 py-4">
+      <div className="flex items-start justify-between gap-6 rounded-md border border-brick/40 bg-brick-surface px-5 py-4 shadow-xs">
         <div>
-          <p className="caps mb-1 text-brick">Analysis stopped</p>
+          <p className="caps mb-1 font-semibold text-brick">Analysis stopped</p>
           <p className="text-[0.92rem] leading-relaxed text-charcoal">{message}</p>
         </div>
         <button

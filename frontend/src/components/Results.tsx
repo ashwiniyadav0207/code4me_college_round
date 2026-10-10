@@ -41,7 +41,7 @@ export default function Results({ result, answer }: Props) {
 
             <div>
               <div className="mb-4 flex items-baseline justify-between gap-4 border-b border-line pb-2">
-                <h2 className="text-[1.15rem]">Claim review</h2>
+                <h2 className="text-[1.15rem] font-semibold text-charcoal">Claim review</h2>
                 <span className="text-[0.76rem] text-ink-faint">
                   {summary.needs_review > 0
                     ? `${summary.needs_review} of ${summary.total} flagged for human review`

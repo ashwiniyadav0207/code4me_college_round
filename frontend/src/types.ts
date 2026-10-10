@@ -29,6 +29,7 @@ export interface Claim {
   span_start: number | null
   span_end: number | null
   verdict: Verdict
+  model_verdict?: string
   explanation: string
   evidence: Evidence[]
   evidence_status: EvidenceStatus

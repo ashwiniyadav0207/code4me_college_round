@@ -10,10 +10,10 @@ export default function AnswerPanel({ answer, onChange, disabled }: Props) {
   const over = answer.length > LIMIT
   return (
     <section className="panel flex flex-col" aria-labelledby="answer-heading">
-      <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
         <div>
           <p className="caps">Step 2</p>
-          <h2 id="answer-heading" className="mt-0.5 text-[1.05rem] leading-tight">
+          <h2 id="answer-heading" className="mt-0.5 text-[1.05rem] font-semibold leading-tight text-charcoal">
             AI-generated answer
           </h2>
         </div>

@@ -17,20 +17,23 @@ export default function LoadingState() {
           {STEPS.map((step) => (
             <li key={step.label} className="flex items-start gap-3">
               <span
-                className="pulse-dot mt-[0.45rem] h-2 w-2 shrink-0 rounded-full bg-forest"
+                className="pulse-dot mt-[0.45rem] h-2 w-2 shrink-0 rounded-full bg-crimson"
                 aria-hidden="true"
               />
               <div>
-                <p className="text-[0.94rem] text-charcoal">{step.label}</p>
-                <p className="text-[0.75rem] tracking-[0.05em] uppercase text-ink-faint">
+                <p className="text-[0.94rem] font-medium text-charcoal">{step.label}</p>
+                <p className="text-[0.75rem] uppercase tracking-[0.05em] text-ink-faint">
                   {step.detail}
                 </p>
               </div>
             </li>
           ))}
         </ol>
-        <div className="mt-6 h-px w-full bg-line">
-          <div className="h-px w-1/3 bg-forest/70" style={{ animation: 'pulse 2s ease-in-out infinite' }} />
+        <div className="mt-6 h-1.5 w-full overflow-hidden rounded-full bg-line">
+          <div
+            className="h-full w-1/3 rounded-full bg-crimson"
+            style={{ animation: 'pulse 2s ease-in-out infinite' }}
+          />
         </div>
         <p className="mt-4 text-[0.8rem] text-ink-soft">
           Large documents take longer: the full source is sent to the model so nothing is silently

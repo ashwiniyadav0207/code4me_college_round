@@ -61,7 +61,7 @@ export default function AnswerHighlights({ answer, claims }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
         <div>
           <p className="caps">Answer under review</p>
-          <h2 id="answer-review-heading" className="mt-0.5 text-[1.05rem] leading-tight">
+          <h2 id="answer-review-heading" className="mt-0.5 text-[1.05rem] font-semibold leading-tight text-charcoal">
             Original wording, unedited
           </h2>
         </div>
@@ -73,7 +73,7 @@ export default function AnswerHighlights({ answer, claims }: Props) {
       </div>
 
       <div className="px-5 py-5">
-        <p className="whitespace-pre-wrap font-display text-[1.02rem] leading-[1.75] text-charcoal">
+        <p className="whitespace-pre-wrap text-[0.98rem] leading-[1.75] text-charcoal">
           {segments.map((seg, i) =>
             seg.claim ? (
               <button
@@ -99,8 +99,8 @@ export default function AnswerHighlights({ answer, claims }: Props) {
             ['hl-ambiguous', 'Ambiguous / conflicting'],
           ].map(([cls, label]) => (
             <li key={label} className="flex items-center gap-2">
-              <span className={`inline-block h-3 w-6 ${cls}`} aria-hidden="true" />
-              {label}
+              <span className={`inline-block h-2.5 w-5 rounded-xs ${cls}`} aria-hidden="true" />
+              <span>{label}</span>
             </li>
           ))}
         </ul>

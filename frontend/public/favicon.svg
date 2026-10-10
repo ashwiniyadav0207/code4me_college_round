@@ -1,6 +1,14 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" role="img" aria-label="Second Opinion">
-  <rect width="32" height="32" fill="#F7F5EF" />
-  <rect x="2" y="2" width="28" height="28" fill="none" stroke="#426B50" stroke-width="2" />
-  <text x="16" y="21.5" font-family="Georgia, 'Times New Roman', serif" font-size="14"
-        text-anchor="middle" fill="#242923">SO</text>
+  <rect width="32" height="32" fill="#111111"/>
+  <rect x="2" y="2" width="28" height="28" fill="none" stroke="#C8102E" stroke-width="2"/>
+  <g fill="none" stroke="#F4EFE6" stroke-width="1.1" stroke-linecap="round">
+    <circle cx="16" cy="16" r="8.2"/>
+    <path d="M16 7.8 V24.2 M7.8 16 H24.2 M10.2 10.2 L21.8 21.8 M21.8 10.2 L10.2 21.8"/>
+  </g>
+  <ellipse cx="16" cy="14.4" rx="2.1" ry="1.7" fill="#C8102E"/>
+  <ellipse cx="16" cy="18.2" rx="2.6" ry="2.3" fill="#F4EFE6"/>
+  <g fill="none" stroke="#F4EFE6" stroke-width="1.15" stroke-linecap="round">
+    <path d="M14.2 14.6 L9.4 11.4 M13.6 15.6 L8.6 16.4 M13.8 17.6 L9.2 20.8 M14.6 18.8 L11.4 23"/>
+    <path d="M17.8 14.6 L22.6 11.4 M18.4 15.6 L23.4 16.4 M18.2 17.6 L22.8 20.8 M17.4 18.8 L20.6 23"/>
+  </g>
 </svg>

@@ -51,14 +51,14 @@ export default function SourcePanel({
 
   return (
     <section className="panel flex flex-col" aria-labelledby="source-heading">
-      <div className="flex items-center justify-between gap-3 border-b border-line px-5 py-3.5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
         <div>
           <p className="caps">Step 1</p>
-          <h2 id="source-heading" className="mt-0.5 text-[1.05rem] leading-tight">
+          <h2 id="source-heading" className="mt-0.5 text-[1.05rem] font-semibold leading-tight text-charcoal">
             Source document
           </h2>
         </div>
-        <div className="flex border border-line-strong" role="group" aria-label="Source input method">
+        <div className="flex rounded-md border border-line bg-ivory p-0.5" role="group" aria-label="Source input method">
           {(['text', 'pdf'] as const).map((m) => (
             <button
               key={m}
@@ -66,10 +66,10 @@ export default function SourcePanel({
               disabled={disabled}
               onClick={() => onModeChange(m)}
               aria-pressed={mode === m}
-              className={`px-3 py-1.5 text-[0.75rem] font-semibold tracking-[0.05em] uppercase transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
+              className={`rounded px-2.5 py-1 text-[0.75rem] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
                 mode === m
-                  ? 'bg-forest text-ivory'
-                  : 'bg-transparent text-ink-soft hover:bg-sage-soft'
+                  ? 'bg-crimson text-white shadow-xs'
+                  : 'text-ink-soft hover:text-charcoal'
               }`}
             >
               {m === 'text' ? 'Paste text' : 'Upload PDF'}
@@ -87,7 +87,7 @@ export default function SourcePanel({
                 e.preventDefault()
                 if (!disabled) accept(e.dataTransfer.files?.[0])
               }}
-              className={`flex min-h-[168px] flex-col items-center justify-center gap-3 border border-dashed px-5 py-7 text-center transition-colors ${
+              className={`flex min-h-[168px] flex-col items-center justify-center gap-3 rounded-md border border-dashed px-5 py-7 text-center transition-colors ${
                 file ? 'border-forest bg-sage-soft' : 'border-line-strong bg-ivory'
               }`}
             >
@@ -104,14 +104,14 @@ export default function SourcePanel({
               />
               {file ? (
                 <>
-                  <p className="caps text-forest">File received</p>
-                  <p className="max-w-full break-all font-display text-[1.02rem]">{file.name}</p>
+                  <p className="caps text-forest font-medium">File received</p>
+                  <p className="max-w-full break-all text-[0.95rem] font-medium text-charcoal">{file.name}</p>
                   <p className="text-[0.8rem] text-ink-soft">
                     {formatBytes(file.size)} · text-based PDF required
                   </p>
                   <button
                     type="button"
-                    className="btn btn-outline mt-1 !py-1.5 !text-[0.78rem]"
+                    className="btn btn-outline mt-1 !py-1 !px-2.5 !text-[0.75rem]"
                     disabled={disabled}
                     onClick={() => {
                       onFileChange(null)
@@ -124,7 +124,7 @@ export default function SourcePanel({
                 </>
               ) : (
                 <>
-                  <p className="text-[0.95rem] text-ink-soft">
+                  <p className="text-[0.9375rem] text-ink-soft">
                     Drop a text-based PDF here, or choose a file
                   </p>
                   <button
@@ -155,7 +155,7 @@ export default function SourcePanel({
             </label>
             <textarea
               id="source-text"
-              className="field min-h-[168px] flex-1 resize-y font-display text-[0.95rem]"
+              className="field min-h-[168px] flex-1 resize-y text-[0.9375rem]"
               placeholder="Paste the source document here — the policy, report, contract or article the answer is supposed to be based on."
               value={sourceText}
               disabled={disabled}

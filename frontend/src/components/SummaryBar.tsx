@@ -34,7 +34,10 @@ export default function SummaryBar({ summary, origin, fileName, pages, model }: 
   ]
 
   return (
-    <section className="border-y border-line bg-sage-soft" aria-label="Analysis summary">
+    <section
+      className="border-y border-line bg-ivory-deep"
+      aria-label="Analysis summary"
+    >
       <div className="mx-auto max-w-[1200px] px-5 py-5 sm:px-8">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <p className="caps">Analysis summary</p>
@@ -50,14 +53,14 @@ export default function SummaryBar({ summary, origin, fileName, pages, model }: 
             return (
               <div
                 key={item.key}
-                className={`border-t pt-2.5 ${review ? 'border-amber/50' : 'border-line-strong'}`}
+                className={`border-t pt-2.5 ${review ? 'border-amber/50' : 'border-line'}`}
               >
                 <dt className="flex items-center gap-2 text-[0.72rem] font-semibold uppercase tracking-[0.08em] text-ink-soft">
-                  <span className={`h-2 w-2 shrink-0 ${swatch(item.key)}`} aria-hidden="true" />
+                  <span className={`h-2 w-2 rounded-full shrink-0 ${swatch(item.key)}`} aria-hidden="true" />
                   <span className={review ? 'text-amber' : ''}>{item.label}</span>
                 </dt>
                 <dd
-                  className={`mt-1 font-display text-[1.7rem] leading-none ${
+                  className={`mt-1 text-[1.65rem] font-bold leading-none ${
                     review ? 'text-amber' : 'text-charcoal'
                   }`}
                 >
