@@ -1,0 +1,42 @@
+const STEPS = [
+  { label: 'Extracting claims from the answer', detail: 'Call 1 of 2' },
+  { label: 'Verifying each claim against your source', detail: 'Call 2 of 2' },
+  { label: 'Validating quotations and page numbers', detail: 'Evidence Guard, in Python' },
+]
+
+export default function LoadingState() {
+  return (
+    <section
+      className="mx-auto max-w-[1200px] px-5 pt-10 sm:px-8"
+      aria-live="polite"
+      aria-busy="true"
+    >
+      <div className="panel mx-auto max-w-[36rem] px-6 py-7">
+        <p className="caps mb-4">Analysis in progress</p>
+        <ol className="space-y-3">
+          {STEPS.map((step) => (
+            <li key={step.label} className="flex items-start gap-3">
+              <span
+                className="pulse-dot mt-[0.45rem] h-2 w-2 shrink-0 rounded-full bg-forest"
+                aria-hidden="true"
+              />
+              <div>
+                <p className="text-[0.94rem] text-charcoal">{step.label}</p>
+                <p className="text-[0.75rem] tracking-[0.05em] uppercase text-ink-faint">
+                  {step.detail}
+                </p>
+              </div>
+            </li>
+          ))}
+        </ol>
+        <div className="mt-6 h-px w-full bg-line">
+          <div className="h-px w-1/3 bg-forest/70" style={{ animation: 'pulse 2s ease-in-out infinite' }} />
+        </div>
+        <p className="mt-4 text-[0.8rem] text-ink-soft">
+          Large documents take longer: the full source is sent to the model so nothing is silently
+          dropped.
+        </p>
+      </div>
+    </section>
+  )
+}
