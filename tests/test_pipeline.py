@@ -319,6 +319,29 @@ def test_fabricated_quotation_is_rejected_and_flagged(policy_pages):
     assert out["summary"]["needs_review"] == 1
 
 
+def test_unverified_supported_claim_downgraded_to_ambiguous(policy_pages):
+    out = run(
+        policy_pages,
+        [claim("c1", "Employees may work remotely five days per week.", with_span=False)],
+        [
+            result(
+                "c1",
+                "Supported",
+                "The source says five days are allowed.",
+                [{"quote": "Employees may work remotely up to five days per week", "page": 1}],
+            )
+        ],
+    )
+    c = out["claims"][0]
+    assert c["model_verdict"] == "Supported"
+    assert c["verdict"] == "Ambiguous/conflicting"
+    assert c["needs_review"] is True
+    assert c["evidence_status"] == "unverified"
+    assert out["summary"]["supported"] == 0
+    assert out["summary"]["ambiguous"] == 1
+    assert out["summary"]["needs_review"] == 1
+
+
 # --------------------------------------------------------------------------- #
 # 8. Inference / recommendation requiring review
 # --------------------------------------------------------------------------- #

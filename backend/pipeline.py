@@ -398,6 +398,11 @@ def run_analysis(
     index = SourceIndex(source.pages)
     claims = [guard_claim(c, index) for c in claims]
 
+    for c in claims:
+        c["model_verdict"] = c["verdict"]
+        if c["verdict"] == SUPPORTED and c.get("evidence_status") != "verified":
+            c["verdict"] = AMBIGUOUS
+
     span_mapping = any(c["span_start"] is not None for c in claims)
     return {
         "claims": claims,
