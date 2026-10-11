@@ -4,6 +4,9 @@ import { highlightClass } from '../types'
 interface Props {
   answer: string
   claims: Claim[]
+  /** Currently selected claim, highlighted in the reading surface. */
+  selectedId?: string | null
+  onSelectClaim?: (id: string) => void
 }
 
 interface Segment {
@@ -13,10 +16,13 @@ interface Segment {
 }
 
 /**
- * Highlights only spans that the backend verified point at the claim's own
- * words. When span mapping is unavailable the answer is shown untouched.
+ * The Annotated Answer: the reading surface.
+ *
+ * Highlights only spans the backend verified point at the claim's own words.
+ * When span mapping is unavailable the answer is shown untouched — no
+ * highlighting is invented.
  */
-export default function AnswerHighlights({ answer, claims }: Props) {
+export default function AnswerHighlights({ answer, claims, selectedId, onSelectClaim }: Props) {
   const spans = claims
     .filter(
       (c) =>
@@ -46,42 +52,36 @@ export default function AnswerHighlights({ answer, claims }: Props) {
   }
   if (pos < answer.length) segments.push({ start: pos, end: answer.length, claim: null })
 
-  const goToClaim = (id: string) => {
-    const el = document.getElementById(`claim-${id}`)
-    if (el) {
-      el.scrollIntoView({ behavior: 'smooth', block: 'center' })
-      el.focus({ preventScroll: true })
-    }
-  }
-
   const annotated = segments.some((s) => s.claim !== null)
 
   return (
     <section className="panel" aria-labelledby="answer-review-heading">
       <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
         <div>
-          <p className="caps">Answer under review</p>
-          <h2 id="answer-review-heading" className="mt-0.5 text-[1.05rem] font-semibold leading-tight text-charcoal">
+          <p className="caps text-[0.66rem]">Answer under audit</p>
+          <h2 id="answer-review-heading" className="mt-0.5 text-[1rem] font-semibold leading-tight text-charcoal">
             Original wording, unedited
           </h2>
         </div>
-        <p className="text-[0.76rem] text-ink-faint">
+        <p className="text-[0.74rem] text-ink-faint">
           {annotated
-            ? 'Highlighted spans map exactly to the claim text. Select one to jump to its card.'
+            ? 'Highlighted spans map exactly to the claim text. Select one to inspect it.'
             : 'Span mapping was not available for this run, so no highlighting is shown.'}
         </p>
       </div>
 
       <div className="px-5 py-5">
-        <p className="whitespace-pre-wrap text-[0.98rem] leading-[1.75] text-charcoal">
+        <p className="whitespace-pre-wrap text-[1rem] leading-[1.8] text-charcoal">
           {segments.map((seg, i) =>
             seg.claim ? (
               <button
                 key={`${seg.claim.id}-${i}`}
                 type="button"
-                className={`hl ${highlightClass(seg.claim.verdict)}`}
+                className={`hl ${highlightClass(seg.claim.verdict)} ${
+                  selectedId === seg.claim.id ? 'ring-2 ring-charcoal ring-offset-1' : ''
+                }`}
                 title={`${seg.claim.verdict} — ${seg.claim.claim_text}`}
-                onClick={() => goToClaim(seg.claim!.id)}
+                onClick={() => onSelectClaim?.(seg.claim!.id)}
               >
                 {answer.slice(seg.start, seg.end)}
               </button>

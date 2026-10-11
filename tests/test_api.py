@@ -208,3 +208,160 @@ def test_pipeline_errors_are_returned_without_tracebacks(client, monkeypatch):
     assert response.json()["detail"]["code"] == "model_unavailable"
     assert "Traceback" not in response.text
     assert FAKE_KEY not in response.text
+
+
+# --------------------------------------------------------------------------- #
+# Feature endpoints: /api/repair and /api/courtroom
+# --------------------------------------------------------------------------- #
+REPAIR_STUB = {
+    "status": "repaired",
+    "reason_code": None,
+    "original_claim": "The home-office stipend is 900 USD per year",
+    "original_verdict": "Contradicted",
+    "suggested_replacement": "The home-office equipment stipend is 400 USD per year.",
+    "explanation": "Section 4 states the figure.",
+    "evidence": [
+        {
+            "quote": "home-office equipment stipend of 400 USD per year",
+            "verified": True,
+            "page": 2,
+            "model_page": 2,
+            "status": "verified",
+            "note": "Quotation found in the extracted source text.",
+        }
+    ],
+    "evidence_status": "verified",
+    "needs_review": False,
+    "source_info": {"origin": "text", "file_name": None, "file_size": None, "pages": 1, "chars": 10},
+    "model": "stub-model",
+    "note": "The original answer and the original claim are unchanged; this is a suggestion only.",
+}
+
+COURTROOM_STUB = {
+    "claim_text": "The home-office stipend is 900 USD per year",
+    "claim_verdict_from_audit": "Contradicted",
+    "prosecutor": {"argument": "Section 4 disagrees.", "evidence": [], "evidence_status": "missing"},
+    "defender": {"argument": "No support in the source.", "source_supports_claim": False, "evidence": [], "evidence_status": "missing"},
+    "judge": {
+        "verdict": "Contradicted",
+        "reasoning": "The figure is 400 USD.",
+        "evidence": [],
+        "evidence_status": "missing",
+        "needs_review": False,
+        "review_reason": None,
+    },
+    "method": "single_model_call",
+    "source_info": {"origin": "text", "file_name": None, "file_size": None, "pages": 1, "chars": 10},
+    "model": "stub-model",
+    "evidence_note": "Produced by a single model request.",
+}
+
+
+@pytest.fixture
+def stub_repair(monkeypatch):
+    def fake_run_repair(*, source, claim_text, answer=None, claim_type=None,
+                        original_verdict=None, api_key, model=None, client=None):
+        return REPAIR_STUB
+
+    monkeypatch.setattr(app_module, "run_repair", fake_run_repair)
+    return fake_run_repair
+
+
+@pytest.fixture
+def stub_courtroom(monkeypatch):
+    def fake_run_courtroom(*, source, claim_text, answer=None, claim_verdict=None,
+                           api_key, model=None, client=None):
+        return COURTROOM_STUB
+
+    monkeypatch.setattr(app_module, "run_courtroom", fake_run_courtroom)
+    return fake_run_courtroom
+
+
+def test_repair_endpoint_returns_the_documented_shape(client, stub_repair, monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", FAKE_KEY)
+    response = client.post(
+        "/api/repair",
+        data={
+            "claim_text": "The home-office stipend is 900 USD per year",
+            "source_text": "Policy text.",
+            "original_verdict": "Contradicted",
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    assert body["status"] == "repaired"
+    assert body["suggested_replacement"]
+    assert body["original_claim"] == "The home-office stipend is 900 USD per year"
+    assert body["original_verdict"] == "Contradicted"
+    assert body["evidence"][0]["verified"] is True
+    assert FAKE_KEY not in response.text
+
+
+def test_courtroom_endpoint_returns_the_documented_shape(client, stub_courtroom, monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", FAKE_KEY)
+    response = client.post(
+        "/api/courtroom",
+        data={
+            "claim_text": "The home-office stipend is 900 USD per year",
+            "source_text": "Policy text.",
+            "claim_verdict": "Contradicted",
+        },
+    )
+    assert response.status_code == 200
+    body = response.json()
+    for key in ("prosecutor", "defender", "judge", "method", "evidence_note"):
+        assert key in body
+    assert body["method"] == "single_model_call"
+    assert body["judge"]["verdict"] in {
+        "Supported", "Contradicted", "Not stated in source",
+        "Ambiguous/conflicting", "Insufficient evidence",
+    }
+    assert body["defender"]["source_supports_claim"] is False
+    assert FAKE_KEY not in response.text
+
+
+@pytest.mark.parametrize("path", ["/api/repair", "/api/courtroom"])
+def test_feature_endpoints_reject_a_missing_claim(client, path, stub_repair, stub_courtroom, monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", FAKE_KEY)
+    response = client.post(path, data={"claim_text": "   ", "source_text": "Policy text."})
+    assert response.status_code == 422
+    assert response.json()["detail"]["code"] == "missing_claim"
+
+
+@pytest.mark.parametrize("path", ["/api/repair", "/api/courtroom"])
+def test_feature_endpoints_reject_an_empty_source(client, path, stub_repair, stub_courtroom, monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", FAKE_KEY)
+    response = client.post(path, data={"claim_text": "A claim.", "source_text": ""})
+    assert response.status_code == 422
+    assert response.json()["detail"]["code"] == "empty_source"
+
+
+@pytest.mark.parametrize("path", ["/api/repair", "/api/courtroom"])
+def test_feature_endpoints_need_an_api_key(client, path, stub_repair, stub_courtroom, monkeypatch):
+    monkeypatch.delenv("GEMINI_API_KEY", raising=False)
+    response = client.post(path, data={"claim_text": "A claim.", "source_text": "Policy text."})
+    assert response.status_code == 503
+    assert response.json()["detail"]["code"] == "missing_api_key"
+
+
+@pytest.mark.parametrize("path", ["/api/repair", "/api/courtroom"])
+def test_feature_endpoints_surface_pipeline_errors_safely(client, path, monkeypatch):
+    from pipeline import PipelineError
+
+    monkeypatch.setenv("GEMINI_API_KEY", FAKE_KEY)
+
+    def boom(**kwargs):
+        raise PipelineError("model_unavailable", "The Gemini request failed: reason.")
+
+    monkeypatch.setattr(app_module, "run_repair", boom)
+    monkeypatch.setattr(app_module, "run_courtroom", boom)
+    response = client.post(path, data={"claim_text": "A claim.", "source_text": "Policy text."})
+    assert response.status_code == 502
+    assert response.json()["detail"]["code"] == "model_unavailable"
+    assert "Traceback" not in response.text
+    assert FAKE_KEY not in response.text
+
+
+def test_health_lists_the_available_features(client):
+    body = client.get("/api/health").json()
+    assert set(body["features"]) == {"analyse", "repair", "courtroom"}

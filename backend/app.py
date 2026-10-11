@@ -21,10 +21,12 @@ load_dotenv(BASE_DIR / ".env", override=False)
 
 from pdf_utils import (  # noqa: E402  (imported after dotenv)
     DEFAULT_MAX_SOURCE_CHARS,
+    SourceDoc,
     SourceError,
     build_source_from_pdf,
     build_source_from_text,
 )
+from features import run_courtroom, run_repair  # noqa: E402
 from pipeline import DEFAULT_MODEL, PipelineError, run_analysis  # noqa: E402
 
 logging.basicConfig(level=logging.INFO)
@@ -43,6 +45,7 @@ def _int_env(name: str, default: int) -> int:
 MAX_REQUEST_BYTES = _int_env("MAX_REQUEST_BYTES", 15 * 1024 * 1024)
 MAX_PDF_BYTES = _int_env("MAX_PDF_BYTES", 8 * 1024 * 1024)
 MAX_ANSWER_CHARS = _int_env("MAX_ANSWER_CHARS", 40_000)
+MAX_CLAIM_CHARS = _int_env("MAX_CLAIM_CHARS", 4_000)
 SOURCE_MAX_CHARS = _int_env("SOURCE_MAX_CHARS", DEFAULT_MAX_SOURCE_CHARS)
 MODEL_NAME = os.getenv("GEMINI_MODEL", DEFAULT_MODEL)
 ALLOWED_ORIGINS = [
@@ -106,6 +109,47 @@ def _fail(status: int, code: str, message: str) -> HTTPException:
     return HTTPException(status_code=status, detail={"code": code, "message": message})
 
 
+def _source_from_request(source_text: str, pdf: Optional[UploadFile]) -> SourceDoc:
+    """Build the SourceDoc from the shared multipart contract (PDF or pasted text).
+
+    Raises SourceError with the same codes/messages the /api/analyse route
+    has always returned.
+    """
+    if pdf is not None:
+        name = pdf.filename or ""
+        if Path(name).suffix.lower() != ".pdf":
+            raise SourceError(
+                "unsupported_file",
+                "Only .pdf files are supported for upload. Paste the text instead.",
+            )
+        data = pdf.file.read(MAX_PDF_BYTES + 1)
+        if len(data) > MAX_PDF_BYTES:
+            raise SourceError(
+                "file_too_large",
+                f"The PDF exceeds the {MAX_PDF_BYTES // (1024 * 1024)} MB upload limit.",
+            )
+        return build_source_from_pdf(data, file_name=name, max_chars=SOURCE_MAX_CHARS)
+    return build_source_from_text(source_text, max_chars=SOURCE_MAX_CHARS)
+
+
+def _require_api_key() -> str:
+    api_key = os.getenv(API_KEY_ENV, "").strip()
+    if not api_key:
+        raise _fail(
+            503,
+            "missing_api_key",
+            "The server has no Gemini API key configured. Add GEMINI_API_KEY to backend/.env and restart the server.",
+        )
+    return api_key
+
+
+def _build_source_or_fail(source_text: str, pdf: Optional[UploadFile]) -> SourceDoc:
+    try:
+        return _source_from_request(source_text, pdf)
+    except SourceError as exc:
+        raise _fail(exc.status_code, exc.code, exc.message)
+
+
 @app.get("/api/health")
 def health() -> dict:
     """Liveness + configuration status. Never includes the key itself."""
@@ -118,6 +162,7 @@ def health() -> dict:
             "answer_max_chars": MAX_ANSWER_CHARS,
             "pdf_max_bytes": MAX_PDF_BYTES,
         },
+        "features": ["analyse", "repair", "courtroom"],
         "cors_origins": ALLOWED_ORIGINS,
     }
 
@@ -139,33 +184,9 @@ def analyse(
         )
 
     # ---- source -----------------------------------------------------------
-    try:
-        if pdf is not None:
-            name = pdf.filename or ""
-            if Path(name).suffix.lower() != ".pdf":
-                raise SourceError(
-                    "unsupported_file",
-                    "Only .pdf files are supported for upload. Paste the text instead.",
-                )
-            data = pdf.file.read(MAX_PDF_BYTES + 1)
-            if len(data) > MAX_PDF_BYTES:
-                raise SourceError(
-                    "file_too_large",
-                    f"The PDF exceeds the {MAX_PDF_BYTES // (1024 * 1024)} MB upload limit.",
-                )
-            source = build_source_from_pdf(data, file_name=name, max_chars=SOURCE_MAX_CHARS)
-        else:
-            source = build_source_from_text(source_text, max_chars=SOURCE_MAX_CHARS)
-    except SourceError as exc:
-        raise _fail(exc.status_code, exc.code, exc.message)
+    source = _build_source_or_fail(source_text, pdf)
 
-    api_key = os.getenv(API_KEY_ENV, "").strip()
-    if not api_key:
-        raise _fail(
-            503,
-            "missing_api_key",
-            "The server has no Gemini API key configured. Add GEMINI_API_KEY to backend/.env and restart the server.",
-        )
+    api_key = _require_api_key()
 
     try:
         result = run_analysis(source=source, answer=answer, api_key=api_key, model=MODEL_NAME)
@@ -178,3 +199,95 @@ def analyse(
         raise _fail(500, "server_error", "Something went wrong while running the analysis. Please try again.")
 
     return result
+
+
+def _validate_claim_field(claim_text: str) -> str:
+    """Shared validation for the claim-scoped feature endpoints."""
+    claim = (claim_text or "").strip()
+    if not claim:
+        raise _fail(422, "missing_claim", "Provide the claim text to work on.")
+    if len(claim) > MAX_CLAIM_CHARS:
+        raise _fail(
+            413,
+            "claim_too_long",
+            f"The claim is {len(claim):,} characters; the limit is {MAX_CLAIM_CHARS:,}.",
+        )
+    return claim
+
+
+@app.post("/api/repair")
+def repair(
+    claim_text: str = Form(""),
+    answer: str = Form(""),
+    claim_type: str = Form(""),
+    original_verdict: str = Form(""),
+    source_text: str = Form(""),
+    pdf: Optional[UploadFile] = File(None),
+) -> dict:
+    """One-click truth repair: a source-grounded replacement, or an explicit decline."""
+    claim = _validate_claim_field(claim_text)
+    if len(answer) > MAX_ANSWER_CHARS:
+        raise _fail(
+            413,
+            "answer_too_long",
+            f"The answer is {len(answer):,} characters; the limit is {MAX_ANSWER_CHARS:,}.",
+        )
+
+    source = _build_source_or_fail(source_text, pdf)
+    api_key = _require_api_key()
+
+    try:
+        return run_repair(
+            source=source,
+            claim_text=claim,
+            answer=answer or None,
+            claim_type=claim_type or None,
+            original_verdict=original_verdict or None,
+            api_key=api_key,
+            model=MODEL_NAME,
+        )
+    except PipelineError as exc:
+        raise _fail(exc.status_code, exc.code, exc.message)
+    except HTTPException:
+        raise
+    except Exception:  # noqa: BLE001
+        logger.exception("Repair failed")
+        raise _fail(500, "server_error", "Something went wrong while running the repair. Please try again.")
+
+
+@app.post("/api/courtroom")
+def courtroom(
+    claim_text: str = Form(""),
+    answer: str = Form(""),
+    claim_verdict: str = Form(""),
+    source_text: str = Form(""),
+    pdf: Optional[UploadFile] = File(None),
+) -> dict:
+    """AI courtroom: prosecutor, defender and judge for one audited claim."""
+    claim = _validate_claim_field(claim_text)
+    if len(answer) > MAX_ANSWER_CHARS:
+        raise _fail(
+            413,
+            "answer_too_long",
+            f"The answer is {len(answer):,} characters; the limit is {MAX_ANSWER_CHARS:,}.",
+        )
+
+    source = _build_source_or_fail(source_text, pdf)
+    api_key = _require_api_key()
+
+    try:
+        return run_courtroom(
+            source=source,
+            claim_text=claim,
+            answer=answer or None,
+            claim_verdict=claim_verdict or None,
+            api_key=api_key,
+            model=MODEL_NAME,
+        )
+    except PipelineError as exc:
+        raise _fail(exc.status_code, exc.code, exc.message)
+    except HTTPException:
+        raise
+    except Exception:  # noqa: BLE001
+        logger.exception("Courtroom failed")
+        raise _fail(500, "server_error", "Something went wrong while running the courtroom. Please try again.")

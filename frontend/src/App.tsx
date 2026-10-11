@@ -7,7 +7,10 @@ import Footer from './components/Footer'
 import InputWorkspace from './components/InputWorkspace'
 import Intro from './components/Intro'
 import Results from './components/Results'
+import ContactPage from './components/ContactPage'
 import type { AnalyseResult } from './types'
+
+type Page = 'investigate' | 'contact'
 
 export default function App() {
   const [theme, setTheme] = useState<'light' | 'dark'>(() => {
@@ -20,6 +23,11 @@ export default function App() {
     }
     return 'light'
   })
+
+  // Hash-based view routing: no router dependency, and a reload keeps the view.
+  const [page, setPage] = useState<Page>(() =>
+    typeof window !== 'undefined' && window.location.hash === '#contact' ? 'contact' : 'investigate',
+  )
 
   const [mode, setMode] = useState<'pdf' | 'text'>('text')
   const [file, setFile] = useState<File | null>(null)
@@ -39,11 +47,24 @@ export default function App() {
     localStorage.setItem('second-opinion-theme', theme)
   }, [theme])
 
+  // Effects toggle initial value so the cursor overlay can read it on mount.
+  useEffect(() => {
+    if (!document.documentElement.getAttribute('data-effects')) {
+      document.documentElement.setAttribute('data-effects', 'on')
+    }
+  }, [])
+
   useEffect(() => {
     if (result && resultsRef.current) {
       resultsRef.current.scrollIntoView({ behavior: 'smooth', block: 'start' })
     }
   }, [result])
+
+  const navigate = (next: Page) => {
+    setPage(next)
+    window.location.hash = next === 'contact' ? 'contact' : ''
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
 
   const toggleTheme = () => {
     setTheme((prev) => (prev === 'light' ? 'dark' : 'light'))
@@ -82,33 +103,49 @@ export default function App() {
 
   return (
     <div className="relative flex min-h-screen flex-col overflow-x-hidden bg-ivory text-charcoal transition-colors duration-150">
-      <Header theme={theme} onToggleTheme={toggleTheme} />
+      <Header theme={theme} onToggleTheme={toggleTheme} page={page} onNavigate={navigate} />
 
       <main className="relative z-10 flex-1">
-        {!result && <Intro theme={theme} />}
+        {page === 'contact' ? (
+          <ContactPage onBack={() => navigate('investigate')} />
+        ) : (
+          <>
+            {!result && <Intro theme={theme} />}
 
-        <InputWorkspace
-          mode={mode}
-          onModeChange={setMode}
-          file={file}
-          onFileChange={setFile}
-          fileError={fileError}
-          onFileError={setFileError}
-          sourceText={sourceText}
-          onSourceTextChange={setSourceText}
-          answer={answer}
-          onAnswerChange={setAnswer}
-          onAnalyse={run}
-          onReset={reset}
-          loading={loading}
-        />
+            <InputWorkspace
+              mode={mode}
+              onModeChange={setMode}
+              file={file}
+              onFileChange={setFile}
+              fileError={fileError}
+              onFileError={setFileError}
+              sourceText={sourceText}
+              onSourceTextChange={setSourceText}
+              answer={answer}
+              onAnswerChange={setAnswer}
+              onAnalyse={run}
+              onReset={reset}
+              loading={loading}
+            />
 
-        {error && <ErrorBanner message={error} onDismiss={() => setError(null)} />}
-        {loading && <LoadingState />}
+            {error && (
+              <ErrorBanner message={error} onDismiss={() => setError(null)} onRetry={run} />
+            )}
+            {loading && <LoadingState />}
 
-        <div ref={resultsRef}>
-          {result && !loading && <Results result={result} answer={answer} />}
-        </div>
+            <div ref={resultsRef}>
+              {result && !loading && (
+                <Results
+                  result={result}
+                  answer={answer}
+                  sourceText={sourceText}
+                  file={mode === 'pdf' ? file : null}
+                  onReset={reset}
+                />
+              )}
+            </div>
+          </>
+        )}
       </main>
 
       <Footer />

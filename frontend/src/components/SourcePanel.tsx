@@ -11,9 +11,16 @@ interface Props {
   fileError: string | null
   onFileError: (message: string | null) => void
   disabled: boolean
+  /** Compact summary chip instead of the full editor, so the answer gets space. */
+  collapsed?: boolean
+  onToggleCollapsed?: (collapsed: boolean) => void
 }
 
 const MAX_PDF_BYTES = 8 * 1024 * 1024
+
+function pageCount(text: string): number {
+  return text.includes('\f') ? Math.max(1, text.split('\f').filter((p) => p.trim()).length) : 1
+}
 
 export default function SourcePanel({
   mode,
@@ -25,6 +32,8 @@ export default function SourcePanel({
   fileError,
   onFileError,
   disabled,
+  collapsed = false,
+  onToggleCollapsed,
 }: Props) {
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -42,23 +51,63 @@ export default function SourcePanel({
     }
     onFileError(null)
     onFileChange(candidate)
+    onToggleCollapsed?.(true)
   }
 
   const chars = sourceText.trim().length
-  const pageCount = sourceText.includes('\f')
-    ? sourceText.split('\f').filter((p) => p.trim()).length || 1
-    : 1
+  const pages = pageCount(sourceText)
+  const hasSource = mode === 'pdf' ? file !== null : chars > 0
+
+  // --- Collapsed: a summary chip; the answer owns the desk ----------------
+  if (collapsed && hasSource) {
+    return (
+      <div className="flex items-center justify-between gap-3 rounded-[var(--radius-card)] border border-line bg-ivory-deep px-4 py-3">
+        <div className="flex min-w-0 items-center gap-3">
+          <span
+            className="flex h-8 w-8 shrink-0 items-center justify-center rounded-[var(--radius-control)] bg-forest/12 text-forest"
+            aria-hidden="true"
+          >
+            <svg viewBox="0 0 16 16" className="h-4 w-4" fill="none" stroke="currentColor" strokeWidth="1.6">
+              <path d="M4 2h5l3 3v9H4z" strokeLinejoin="round" />
+              <path d="M9 2v3h3" strokeLinejoin="round" />
+            </svg>
+          </span>
+          <div className="min-w-0">
+            <p className="caps mb-0.5 text-[0.66rem]">Source locked in</p>
+            <p className="truncate text-[0.88rem] font-medium text-charcoal">
+              {mode === 'pdf' && file
+                ? file.name
+                : `${chars.toLocaleString()} characters pasted`}
+            </p>
+          </div>
+          <span className="shrink-0 rounded-full border border-line bg-paper px-2 py-0.5 text-[0.7rem] font-medium text-ink-soft">
+            {pages} {pages === 1 ? 'page' : 'pages'}
+          </span>
+        </div>
+        {onToggleCollapsed && (
+          <button
+            type="button"
+            disabled={disabled}
+            onClick={() => onToggleCollapsed(false)}
+            className="btn btn-quiet shrink-0 !text-[0.78rem]"
+          >
+            Edit source
+          </button>
+        )}
+      </div>
+    )
+  }
 
   return (
     <section className="panel flex flex-col" aria-labelledby="source-heading">
-      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3.5">
+      <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line px-5 py-3">
         <div>
-          <p className="caps">Step 1</p>
-          <h2 id="source-heading" className="mt-0.5 text-[1.05rem] font-semibold leading-tight text-charcoal">
-            Source document
+          <p className="caps text-[0.66rem]">Source</p>
+          <h2 id="source-heading" className="mt-0.5 text-[1rem] font-semibold leading-tight text-charcoal">
+            The reference document
           </h2>
         </div>
-        <div className="flex rounded-md border border-line bg-ivory p-0.5" role="group" aria-label="Source input method">
+        <div className="flex rounded-[var(--radius-control)] border border-line bg-ivory p-0.5" role="group" aria-label="Source input method">
           {(['text', 'pdf'] as const).map((m) => (
             <button
               key={m}
@@ -67,9 +116,7 @@ export default function SourcePanel({
               onClick={() => onModeChange(m)}
               aria-pressed={mode === m}
               className={`rounded px-2.5 py-1 text-[0.75rem] font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-50 ${
-                mode === m
-                  ? 'bg-crimson text-white shadow-xs'
-                  : 'text-ink-soft hover:text-charcoal'
+                mode === m ? 'bg-charcoal text-white dark:bg-crimson' : 'text-ink-soft hover:text-charcoal'
               }`}
             >
               {m === 'text' ? 'Paste text' : 'Upload PDF'}
@@ -87,7 +134,7 @@ export default function SourcePanel({
                 e.preventDefault()
                 if (!disabled) accept(e.dataTransfer.files?.[0])
               }}
-              className={`flex min-h-[168px] flex-col items-center justify-center gap-3 rounded-md border border-dashed px-5 py-7 text-center transition-colors ${
+              className={`flex min-h-[180px] flex-col items-center justify-center gap-3 rounded-[var(--radius-control)] border border-dashed px-5 py-7 text-center transition-colors ${
                 file ? 'border-forest bg-sage-soft' : 'border-line-strong bg-ivory'
               }`}
             >
@@ -155,7 +202,7 @@ export default function SourcePanel({
             </label>
             <textarea
               id="source-text"
-              className="field min-h-[168px] flex-1 resize-y text-[0.9375rem]"
+              className="field min-h-[180px] flex-1 resize-y text-[0.9375rem]"
               placeholder="Paste the source document here — the policy, report, contract or article the answer is supposed to be based on."
               value={sourceText}
               disabled={disabled}
@@ -165,10 +212,12 @@ export default function SourcePanel({
             <div className="flex items-center justify-between text-[0.76rem] text-ink-faint">
               <span>
                 {chars > 0
-                  ? `${chars.toLocaleString()} characters · ${pageCount} ${pageCount === 1 ? 'page' : 'pages'}`
+                  ? `${chars.toLocaleString()} characters · ${pages} ${pages === 1 ? 'page' : 'pages'}`
                   : 'Nothing pasted yet'}
               </span>
-              <span>Page breaks (form feed) are preserved as page boundaries</span>
+              <span className="hidden sm:inline">
+                Form-feed characters are preserved as page boundaries
+              </span>
             </div>
           </>
         )}

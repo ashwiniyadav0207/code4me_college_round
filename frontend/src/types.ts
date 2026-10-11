@@ -118,3 +118,46 @@ export function formatBytes(bytes: number): string {
   if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`
   return `${(bytes / (1024 * 1024)).toFixed(1)} MB`
 }
+
+export interface RepairResult {
+  status: 'repaired' | 'insufficient_evidence'
+  reason_code: 'replacement_missing' | 'evidence_missing' | 'evidence_unverified' | null
+  original_claim: string
+  original_verdict: string | null
+  suggested_replacement: string | null
+  explanation: string
+  evidence: Evidence[]
+  evidence_status: EvidenceStatus
+  needs_review: boolean
+  source_info: SourceInfo
+  model: string
+  note: string
+}
+
+export interface CourtroomSide {
+  argument: string
+  evidence: Evidence[]
+  evidence_status: EvidenceStatus
+  source_supports_claim?: boolean
+}
+
+export interface CourtroomJudge {
+  verdict: string
+  reasoning: string
+  evidence: Evidence[]
+  evidence_status: EvidenceStatus
+  needs_review: boolean
+  review_reason: string | null
+}
+
+export interface CourtroomResult {
+  claim_text: string
+  claim_verdict_from_audit: string | null
+  prosecutor: CourtroomSide
+  defender: CourtroomSide
+  judge: CourtroomJudge
+  method: string
+  source_info: SourceInfo
+  model: string
+  evidence_note: string
+}

@@ -4,42 +4,29 @@ interface Props {
   theme?: 'light' | 'dark'
 }
 
+/**
+ * Homepage hero. A single-screen statement of what the tool does, not a form:
+ * the actual input surface is the Evidence Desk directly below it.
+ */
 export default function Intro({ theme }: Props) {
   return (
-    <section className="relative mx-auto max-w-[1200px] px-5 pb-6 pt-8 sm:px-8 sm:pt-12">
-      {/* Spider-Verse Web Accent contained in the upper-right corner of hero — ONLY active in Dark Mode */}
+    <section className="relative mx-auto max-w-[1240px] px-5 pb-2 pt-10 sm:px-8 sm:pt-14">
       {theme === 'dark' && <SpiderVerseHeroVignette />}
 
-      <div className="relative z-10 grid gap-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:items-end">
-        <div>
-          <p className="caps mb-3 font-semibold text-crimson">Claim-by-claim audit</p>
-          <h1 className="hero-heading max-w-[20ch] text-[clamp(1.9rem,3.8vw,2.85rem)] leading-[1.15] text-charcoal">
-            Does the answer actually follow from the source?
-          </h1>
-          <p className="mt-4 max-w-[52ch] text-[1.02rem] leading-relaxed text-ink-soft">
-            Second Opinion splits an AI answer into individual claims, tests each one against the
-            document you supply, and shows the exact quotation and page behind every verdict.
-          </p>
-        </div>
+      <div className="relative z-10 max-w-[46rem]">
+        <p className="caps mb-3 font-semibold text-crimson">Claim-by-claim audit</p>
+        <h1 className="hero-heading text-[clamp(2.1rem,5vw,3.4rem)] leading-[1.08] text-charcoal">
+          Check an AI answer against the document it should have used.
+        </h1>
+        <p className="mt-5 max-w-[54ch] text-[1.06rem] leading-relaxed text-ink-soft">
+          VeriFact splits the answer into individual claims, tests each one against your source,
+          and shows the exact quotation and page behind every verdict.
+        </p>
 
-        <ul className="space-y-2 border-t border-line pt-4 text-[0.8125rem] leading-relaxed text-ink-soft lg:border-t-0 lg:border-l lg:border-line lg:pt-1 lg:pl-6">
-          <li className="flex items-center gap-2.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-forest dark:bg-crimson shrink-0" aria-hidden="true" />
-            <span>Two model calls, no hidden passes</span>
-          </li>
-          <li className="flex items-center gap-2.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-forest dark:bg-crimson shrink-0" aria-hidden="true" />
-            <span>Quotations validated in Python</span>
-          </li>
-          <li className="flex items-center gap-2.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-forest dark:bg-crimson shrink-0" aria-hidden="true" />
-            <span>Page references recomputed from the source</span>
-          </li>
-          <li className="flex items-center gap-2.5">
-            <span className="h-1.5 w-1.5 rounded-full bg-forest dark:bg-crimson shrink-0" aria-hidden="true" />
-            <span>Human review flagged where evidence is thin</span>
-          </li>
-        </ul>
+        <p className="caption-box mt-6 max-w-[52ch] text-[0.85rem] leading-relaxed text-ink-soft">
+          <strong className="font-semibold text-charcoal">Verdicts are proposed by a model;</strong>{' '}
+          quotations are verified by this app.
+        </p>
       </div>
     </section>
   )
