@@ -26,7 +26,7 @@ export default function Header({ theme, onToggleTheme }: Props) {
           </div>
           <div>
             <div className="caps mb-0.5 text-crimson font-semibold">VeriFact</div>
-            <div className="text-[1.35rem] font-bold leading-none tracking-tight text-charcoal sm:text-[1.45rem] dark:font-display dark:tracking-[0.02em] dark:uppercase">
+            <div className="header-title text-[1.35rem] font-bold leading-none tracking-tight text-charcoal sm:text-[1.45rem] dark:uppercase">
               Second <span className="text-crimson">Opinion</span>
             </div>
             <div className="mt-1 text-[0.78rem] text-ink-soft">
@@ -37,7 +37,7 @@ export default function Header({ theme, onToggleTheme }: Props) {
 
         <div className="flex flex-wrap items-center gap-3">
           <div className="status-chip flex items-center gap-2 px-3 py-1.5">
-            <span className="h-2 w-2 shrink-0 rounded-full bg-crimson" aria-hidden="true" />
+            <span className="h-2 w-2 shrink-0 rounded-full bg-crimson dark:shadow-[0_0_4px_rgba(200,16,46,0.3)]" aria-hidden="true" />
             <span className="text-[0.75rem] font-medium text-charcoal">
               Source-bound · checks run against your document only
             </span>

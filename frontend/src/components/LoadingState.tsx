@@ -17,7 +17,7 @@ export default function LoadingState() {
           {STEPS.map((step) => (
             <li key={step.label} className="flex items-start gap-3">
               <span
-                className="pulse-dot mt-[0.45rem] h-2 w-2 shrink-0 rounded-full bg-crimson"
+                className="pulse-dot mt-[0.45rem] h-2 w-2 shrink-0 rounded-full bg-crimson dark:shadow-[0_0_4px_rgba(200,16,46,0.3)]"
                 aria-hidden="true"
               />
               <div>
@@ -31,7 +31,7 @@ export default function LoadingState() {
         </ol>
         <div className="mt-6 h-1.5 w-full overflow-hidden rounded-full bg-line">
           <div
-            className="h-full w-1/3 rounded-full bg-crimson"
+            className="h-full w-1/3 rounded-full bg-crimson dark:shadow-[0_0_5px_rgba(200,16,46,0.3)]"
             style={{ animation: 'pulse 2s ease-in-out infinite' }}
           />
         </div>

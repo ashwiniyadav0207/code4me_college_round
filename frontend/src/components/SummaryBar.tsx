@@ -60,7 +60,7 @@ export default function SummaryBar({ summary, origin, fileName, pages, model }: 
                   <span className={review ? 'text-amber' : ''}>{item.label}</span>
                 </dt>
                 <dd
-                  className={`mt-1 text-[1.65rem] font-bold leading-none ${
+                  className={`mt-1 text-[1.65rem] font-bold leading-none dark:font-display dark:tracking-[0.02em] ${
                     review ? 'text-amber' : 'text-charcoal'
                   }`}
                 >
