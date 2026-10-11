@@ -57,7 +57,7 @@ export default function SummaryBar({
       className="border-y border-line bg-ivory-deep"
       aria-label="Analysis summary"
     >
-      <div className="mx-auto max-w-[1200px] px-5 py-5 sm:px-8">
+      <div className="mx-auto max-w-[1240px] px-5 py-5 sm:px-8">
         <div className="flex flex-wrap items-baseline justify-between gap-x-6 gap-y-2">
           <p className="caps">
             Analysis summary
@@ -108,7 +108,7 @@ export default function SummaryBar({
                   <span className={review ? 'text-amber' : ''}>{item.label}</span>
                 </div>
                 <div
-                  className={`mt-1.5 text-[1.65rem] font-bold leading-none ${
+                  className={`mt-1.5 text-[1.65rem] font-bold leading-none dark:font-display dark:tracking-[0.02em] ${
                     item.key === 'supported'
                       ? 'text-forest dark:text-emerald-400'
                       : item.key === 'contradicted'

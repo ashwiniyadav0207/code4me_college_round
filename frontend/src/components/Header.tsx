@@ -10,12 +10,9 @@ interface Props {
 }
 
 /**
- * Slim sticky top bar: wordmark left, Investigate / Contact centre,
+ * Slim sticky top bar: wordmark left, Investigate / Contact nav & status chip centre,
  * theme + effects toggles right. Glass in both themes (with opaque
  * fallbacks for prefers-reduced-transparency / prefers-contrast).
- *
- * No Sign in control: authentication is deferred and a login that
- * authenticates nothing would be deceptive.
  */
 export default function Header({ theme, onToggleTheme, page = 'investigate', onNavigate }: Props) {
   const navItems: Array<{ id: 'investigate' | 'contact'; label: string }> = [
@@ -42,8 +39,9 @@ export default function Header({ theme, onToggleTheme, page = 'investigate', onN
               <ellipse cx="16" cy="18.3" rx="2.7" ry="2.35" fill="currentColor" />
             </svg>
           </div>
-          <div className="leading-none">
-            <div className="text-[1.02rem] font-bold tracking-tight text-charcoal dark:font-display-dark dark:text-[1.15rem] dark:uppercase">
+          <div>
+            <div className="caps mb-0.5 text-crimson font-semibold">VeriFact</div>
+            <div className="header-title text-[1.18rem] font-bold leading-none tracking-tight text-charcoal sm:text-[1.3rem] dark:font-display-dark dark:uppercase">
               Second <span className="text-crimson">Opinion</span>
             </div>
             <div className="mt-1 hidden text-[0.72rem] text-ink-faint sm:block">
@@ -52,26 +50,35 @@ export default function Header({ theme, onToggleTheme, page = 'investigate', onN
           </div>
         </button>
 
-        <nav className="order-3 flex items-center gap-1 sm:order-none" aria-label="Primary">
-          {navItems.map((item) => {
-            const current = page === item.id
-            return (
-              <button
-                key={item.id}
-                type="button"
-                onClick={() => onNavigate?.(item.id)}
-                aria-current={current ? 'page' : undefined}
-                className={`rounded-full px-3 py-1 text-[0.82rem] font-medium transition-colors ${
-                  current
-                    ? 'bg-charcoal text-white dark:bg-crimson dark:text-white'
-                    : 'text-ink-soft hover:text-charcoal'
-                }`}
-              >
-                {item.label}
-              </button>
-            )
-          })}
-        </nav>
+        <div className="order-3 flex flex-wrap items-center gap-3 sm:order-none">
+          <nav className="flex items-center gap-1" aria-label="Primary">
+            {navItems.map((item) => {
+              const current = page === item.id
+              return (
+                <button
+                  key={item.id}
+                  type="button"
+                  onClick={() => onNavigate?.(item.id)}
+                  aria-current={current ? 'page' : undefined}
+                  className={`rounded-full px-3 py-1 text-[0.82rem] font-medium transition-colors ${
+                    current
+                      ? 'bg-charcoal text-white dark:bg-crimson dark:text-white'
+                      : 'text-ink-soft hover:text-charcoal'
+                  }`}
+                >
+                  {item.label}
+                </button>
+              )
+            })}
+          </nav>
+
+          <div className="status-chip hidden items-center gap-2 px-3 py-1.5 md:flex">
+            <span className="h-2 w-2 shrink-0 rounded-full bg-crimson dark:shadow-[0_0_4px_rgba(200,16,46,0.3)]" aria-hidden="true" />
+            <span className="text-[0.75rem] font-medium text-charcoal">
+              Source-bound · checks run against your document only
+            </span>
+          </div>
+        </div>
 
         <div className="flex items-center gap-2">
           <EffectsToggle />
